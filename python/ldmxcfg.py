@@ -204,13 +204,17 @@ class ConditionsObjectProvider:
         Name (including namespace) of the C++ class of the provider
     tagName : str
         Tag which identifies the generation of information
+    moduleName : str
+        Module that this ConditionsObjectProvider is compiled inside of
 
     """
 
-    def __init__(self, instanceName, className, tagName):
+    def __init__(self, instanceName, className, tagName, moduleName):
         self.instanceName=instanceName
         self.className=className
         self.tagName=tagName
+
+        Process.addLibrary( '@CMAKE_INSTALL_PREFIX@/lib/lib%s.so'%moduleName )
 
     def __str__(self) :
         """Stringify this ConditionsObjectProvider, creates a message with all the internal parameters.
