@@ -366,8 +366,7 @@ class Process:
         if ( Process.lastProcess is not None ) :
             Process.lastProcess.libraries.append( lib )
         else :
-            print( "[ Process.addLibrary ]: No Process object defined yet! You need to create a Process before creating any EventProcessors." )
-            sys.exit(1)
+            raise Exception('No Process object defined yet! You need to create a Process before declaring any libraries to load.')
 
     def declareConditionsObjectProvider(cop) :
         """Add a provider to the list of conditions object providers
@@ -395,13 +394,14 @@ class Process:
 
             # check if the input COP has already been declared
             for already_declared_cop in Process.lastProcess.conditionsObjectProviders :
-                if  already_declared_cop == cop : return
+                if  already_declared_cop == cop :
+                    already_declared_cop = cop # override previously defined COP
+                    return
 
             # made it through loop without finding match, add COP to list
             Process.lastProcess.conditionsObjectProviders.append( cop )
         else :
-            print( "[ Process.addConditionsObjectProvider ]: No Process object defined yet! You need to create a Process before creating any EventProcessors." )
-            sys.exit(1)
+            raise Exception('No Process object defined yet! You need to create a Process before declaring conditions object providers.')
             
     def skimDefaultIsSave(self):
         """Configure the process to by default keep every event."""
