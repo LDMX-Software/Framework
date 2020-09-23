@@ -196,26 +196,48 @@ class ConditionsObjectProvider:
 
     This object contains the parameters that are necessary for a ldmx::ConditionsObjectProvider to be configured.
 
+    In this constructor we also do two helpful processes.
+    1. We append the module that this provider is in to the list of libraries to load
+    2. We declare this provider so that the Process "knows" it exists and will load it into the run
+
     Parameters
     ----------
-    instanceName : str
-        Name of this copy of the provider object
+    objectName : str
+        Name of the object this provider provides
     className : str
         Name (including namespace) of the C++ class of the provider
     tagName : str
         Tag which identifies the generation of information
     moduleName : str
-        Module that this ConditionsObjectProvider is compiled inside of
-
+        Name of module that this COP is compiled into (e.g. Ecal or EventProc)
     """
 
-    def __init__(self, instanceName, className, tagName, moduleName):
-        self.instanceName=instanceName
+    def __init__(self, objectName, className, tagName, moduleName):
+        self.objectName=objectName
         self.className=className
         self.tagName=tagName
 
+        # make sure process loads this library if it hasn't yet
         Process.addLibrary( '@CMAKE_INSTALL_PREFIX@/lib/lib%s.so'%moduleName )
+        
+        #register this conditions object provider with the process
         Process.declareConditionsObjectProvider(self)
+
+    def __eq__(self,other) :
+        """Check if two COPs are the same
+
+        We decide that two COPs are 'equal' if they have the same instance and class names
+        
+        Parameters
+        ----------
+        other : ConditionsObjectProvider
+            other COP to compare agains
+        """
+
+        if not isinstance(other,ConditionsObjectProvider) :
+            return NotImplemented
+
+        return (self.objectName == other.objectName and self.className == other.className)
 
     def __str__(self) :
         """Stringify this ConditionsObjectProvider, creates a message with all the internal parameters.
@@ -234,38 +256,47 @@ class ConditionsObjectProvider:
 
         return msg
 
-    def __eq__(self, other):
-        """Compare two condition objects providers to see if they are different
+class RandomNumberSeedService(ConditionsObjectProvider):
+    """The random number seed service
 
-        This python function allows for us to do cop1 == cop2.
+    This object registers the random number seed service with the process and
+    gives some helper functions for configuration.
 
-        Two COPs match if all of the following conditions are met
-        - Same class name
-        - Same instance name
-        - Same tag name
+    Attributes
+    ----------
+    seedMode : str
+        Name of mode of getting random seeds
+    """
+
+    def __init__(self,tag) :
+        super().__init__('RandomNumberSeedService','ldmx::RandomNumberSeedService',tag,'Framework')
+        self.seedMode = ''
+        self.seed=-1 #only used in external mode
+
+    def run(self) :
+        """Base random number seeds off of the run number"""
+        self.seedMode = 'run'
+
+    def external(self,seed) :
+        """Input the master random number seed
 
         Parameters
         ----------
-        other : ConditionsObjectProvider
-            Another provider to compare against
-
-        Returns
-        -------
-        bool :
-            True if self and other match
+        seed : int
+            Integer to use as master random number seed
         """
+        self.seedMode = 'external'
+        self.seed = seed
 
-        if not isinstance(other,ConditionsObjectProvider):
-            # don't attempt to compare against unrelated types
-            return NotImplemented
-
-        return (self.instanceName == other.instanceName and self.className == other.className and self.tagName == other.tagName)
+    def time(self) :
+        """Set master random seed based off of time"""
+        self.seedMode = 'time'
     
 class Process:
     """Process configuration object
 
     The python object that stores the necessary parameters for configuring
-    a Process for fire to execute.
+    a Process for ldmx-app to execute.
 
     Upon construction, the class-wide reference lastProcess is set
     and the rest of the attributes are set to sensible defaults.
@@ -310,6 +341,8 @@ class Process:
         File to print log messages to, won't setup file logging if this parameter is not set
     conditionsObjectProviders : list of ConditionsObjectProviders
         List of the sources of calibration and conditions information
+    randomNumberSeedService : RandomNumberSeedService
+        conditions object that provides random number seeds in a deterministic way
 
     See Also
     --------
@@ -321,8 +354,8 @@ class Process:
     
     def __init__(self, passName):
 
-        if lastProcess is not None :
-            raise Exception("Only one Process should be created in a configuration script!")
+        if ( Process.lastProcess is not None ) :
+            raise Exception( "Process object is already created! You can only create one Process object in a script." )
 
         self.passName=passName
         self.maxEvents=-1
@@ -343,6 +376,9 @@ class Process:
         self.histogramFile=''
         self.conditionsObjectProviders=[]
         Process.lastProcess=self
+
+        # needs lastProcess defined to self-register
+        self.randomNumberSeedService=RandomNumberSeedService('rnss')
 
     def addLibrary(lib) :
         """Add a library to the list of dynamically loaded libraries
@@ -366,42 +402,36 @@ class Process:
         if ( Process.lastProcess is not None ) :
             Process.lastProcess.libraries.append( lib )
         else :
-            raise Exception('No Process object defined yet! You need to create a Process before declaring any libraries to load.')
+            raise Exception( "No Process object defined yet! You need to create a Process before creating any EventProcessors." )
 
-    def declareConditionsObjectProvider(cop) :
-        """Add a provider to the list of conditions object providers
+    def declareConditionsObjectProvider(cop):
+        """Declare a conditions object provider to be loaded with the process
 
         A process object must already have been created.
 
         Parameters
         ----------
         cop : ConditionsObjectProvider
-            object provider to add to the list
+            provider to load with the process
 
         Warnings
         --------
-        - Will exit the script if a process object hasn't been defined yet
-        - Will ignore the addition if the input cop matches a cop already provided
-
-        Examples
-        --------
-            from LDMX.Ecal import EcalGeometry
-            Process.addConditionsObjectProvider( EcalGeometry.EcalGeometryProvider('example') )
+        - Will exit the script if a process object hasn't been defined yet.
+        - Overrides an already declared COP with the passed COP if they are equal
         """
-
 
         if ( Process.lastProcess is not None ) :
 
-            # check if the input COP has already been declared
-            for already_declared_cop in Process.lastProcess.conditionsObjectProviders :
-                if  already_declared_cop == cop :
-                    already_declared_cop = cop # override previously defined COP
+            # check if the input COP matches one already declared
+            #   if it does match, override the already declared one with the passed one
+            for index, already_defined_cop in enumerate(Process.lastProcess.conditionsObjectProviders) :
+                if cop == already_defined_cop :
+                    Process.lastProcess.conditionsObjectProviders[index] = cop
                     return
 
-            # made it through loop without finding match, add COP to list
             Process.lastProcess.conditionsObjectProviders.append( cop )
         else :
-            raise Exception('No Process object defined yet! You need to create a Process before declaring conditions object providers.')
+            raise Exception( "No Process object defined yet! You need to create a Process before declaring any ConditionsObjectProviders." )
             
     def skimDefaultIsSave(self):
         """Configure the process to by default keep every event."""
