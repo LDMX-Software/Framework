@@ -248,7 +248,7 @@ class ConditionsObjectProvider:
             A message with all the parameters and member variables in a human readable format
         """
 
-        msg = "\n  ConditionsObjectProvider(%s of class %s, tag='%s')"%(self.instanceName,self.className,self.tagName)
+        msg = "\n  ConditionsObjectProvider(%s of class %s, tag='%s')"%(self.objectName,self.className,self.tagName)
         if len(self.__dict__)>0:
             msg += "\n   Parameters:"
             for k, v in self.__dict__.items():
@@ -272,6 +272,9 @@ class RandomNumberSeedService(ConditionsObjectProvider):
         super().__init__('RandomNumberSeedService','ldmx::RandomNumberSeedService',tag,'Framework')
         self.seedMode = ''
         self.seed=-1 #only used in external mode
+
+        # use run seed mode by default
+        self.run()
 
     def run(self) :
         """Base random number seeds off of the run number"""
