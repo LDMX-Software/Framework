@@ -21,8 +21,8 @@ namespace test {
  */
 class fires : public Catch::MatcherBase<std::string> {
  public:
-  ///Constructor, does nothing
-  fires() { }
+  /// Constructor, does nothing
+  fires() {}
 
   /**
    * Check if the input string does what we want.
@@ -43,7 +43,7 @@ class fires : public Catch::MatcherBase<std::string> {
     return "can be loaded through python and run through process.";
   }
 
-}; //fires
+};  // fires
 
-} //test
-} //ldmx
+}  // namespace test
+}  // namespace ldmx
