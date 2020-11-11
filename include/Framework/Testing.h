@@ -1,8 +1,7 @@
 
 #include "catch.hpp"
 
-#include "Framework/Process.h"
-#include "Framework/ConfigurePython.h"
+#include <stdlib.h>
 
 namespace ldmx {
 namespace test {
@@ -33,15 +32,8 @@ class fires : public Catch::MatcherBase<std::string> {
    *  2. The input config path can be run through the process
    */
   bool match(const std::string& config_path) const override {
-    
-    try {
-      char** args;
-      ConfigurePython cfg(config_path,args,0);
-      ProcessHandle p = cfg.makeProcess();
-      p->run();
-    } catch(...) { return false; }
-
-    return true;
+    std::string cmd = "fire " + config_path;
+    return system(cmd.c_str()) == 0;
   }
 
   /**
