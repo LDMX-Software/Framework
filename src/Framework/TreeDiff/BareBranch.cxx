@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include <cstring>
 
 #include "RZip.h"
@@ -25,7 +26,7 @@ bool BareBranch::sameContent(const BareBranch& other) const {
     // probably due to change in compression level/algo
     return false;
   }
-  
+
   /**
    * WARN
    * We are assuming that our baskets and their baskets
@@ -80,6 +81,7 @@ char* BareBranch::getContent(int i_basket, int& len) const {
         + " from branch " + name() + " in file " + file_->GetName()).Data());
   }
 
+  len = compressed_len;
   return compressed_content;
   /*
   char *content;
