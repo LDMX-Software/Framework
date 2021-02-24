@@ -1,12 +1,12 @@
 
-#include <iostream>
-#include <cstring>
+#include "Framework/TreeDiff/BareBranch.h"
 
-#include "RZip.h"
-#include "TBasket.h"
+#include <cstring>
+#include <iostream>
 
 #include "Framework/Exception/Exception.h"
-#include "Framework/TreeDiff/BareBranch.h"
+#include "RZip.h"
+#include "TBasket.h"
 
 namespace framework {
 namespace treediff {
@@ -14,7 +14,7 @@ namespace treediff {
 bool BareBranch::sameContent(const BareBranch& other) const {
   // load all of the baskets of this branch into memory
   // ROOT groups data on branches into 'baskets' in order
-  // to keep the current amount of memory in use below 
+  // to keep the current amount of memory in use below
   // a certain threshold, each basket corresponds to a
   // certain number of entries in the branch compressed
   // and saved into the output file
@@ -36,11 +36,11 @@ bool BareBranch::sameContent(const BareBranch& other) const {
   bool content_match{true};
   for (int i_basket{0}; i_basket < num_our_baskets; i_basket++) {
     int our_len{0}, their_len{0};
-    char* our_buff   = this->getContent(i_basket, our_len);
+    char* our_buff = this->getContent(i_basket, our_len);
     char* their_buff = other.getContent(i_basket, their_len);
 
-    content_match = (our_len == their_len) and 
-      (memcmp(our_buff, their_buff, our_len) == 0);
+    content_match =
+        (our_len == their_len) and (memcmp(our_buff, their_buff, our_len) == 0);
 
     delete[] our_buff;
     delete[] their_buff;
@@ -48,7 +48,7 @@ bool BareBranch::sameContent(const BareBranch& other) const {
     // leave on first failure
     if (not content_match) break;
   }
-  
+
   // make sure to drop all our baskets
   // so that ROOT knows we don't care about those objects
   // anymore
@@ -65,20 +65,22 @@ char* BareBranch::getContent(int i_basket, int& len) const {
   TBasket* basket = branch_->GetBasket(i_basket);
   if (not basket) {
     EXCEPTION_RAISE("NullBasket",
-        ("Received a NULL basket for branch " + name()
-        + " and basket index " + std::to_string(i_basket)).Data());
+                    ("Received a NULL basket for branch " + name() +
+                     " and basket index " + std::to_string(i_basket))
+                        .Data());
   }
 
   int compressed_len = basket->GetNbytes() - basket->GetKeylen();
-  char *compressed_content = new char[compressed_len];
+  char* compressed_content = new char[compressed_len];
   if (file_->ReadBuffer(compressed_content,
-        basket->GetSeekKey()+basket->GetKeylen(),
-        compressed_len)) {
+                        basket->GetSeekKey() + basket->GetKeylen(),
+                        compressed_len)) {
     // return status of 1 is a failure
-    delete [] compressed_content;
+    delete[] compressed_content;
     EXCEPTION_RAISE("ReadFail",
-        ("Failure to read basked " + std::to_string(i_basket)
-        + " from branch " + name() + " in file " + file_->GetName()).Data());
+                    ("Failure to read basked " + std::to_string(i_basket) +
+                     " from branch " + name() + " in file " + file_->GetName())
+                        .Data());
   }
 
   /* don't try to uncompress
@@ -87,9 +89,9 @@ char* BareBranch::getContent(int i_basket, int& len) const {
   return compressed_content;
   */
 
-  char *content;
+  char* content;
   if (basket->GetObjlen() > compressed_len) {
-    //need to de-compress
+    // need to de-compress
     len = basket->GetObjlen();
     content = new char[len];
 
@@ -104,31 +106,35 @@ char* BareBranch::getContent(int i_basket, int& len) const {
      */
     int unzipped_len, decompressed_len;
     // get information on how content was compressed
-    int rc = R__unzip_header(&compressed_len, (unsigned char *)compressed_content, &decompressed_len);
+    int rc = R__unzip_header(
+        &compressed_len, (unsigned char*)compressed_content, &decompressed_len);
     if (rc != 0) {
       EXCEPTION_RAISE("UnzipFail",
-          ("Failed to de-compress basket " + std::to_string(i_basket)
-          + " from branch " + name()).Data());
+                      ("Failed to de-compress basket " +
+                       std::to_string(i_basket) + " from branch " + name())
+                          .Data());
     }
     // Actually uncompress some content
-    R__unzip(&compressed_len, (unsigned char *)compressed_content, &decompressed_len, (unsigned char *)content, &unzipped_len);
+    R__unzip(&compressed_len, (unsigned char*)compressed_content,
+             &decompressed_len, (unsigned char*)content, &unzipped_len);
     if (unzipped_len == 0) {
       EXCEPTION_RAISE("UnzipFail",
-          ("Failed to de-compress basket " + std::to_string(i_basket)
-          + " from branch " + name()).Data());
+                      ("Failed to de-compress basket " +
+                       std::to_string(i_basket) + " from branch " + name())
+                          .Data());
     }
 
   } else {
-    //don't need to de-compress
+    // don't need to de-compress
     len = compressed_len;
     content = new char[len];
     memcpy(content, compressed_content, len);
   }
 
-  delete [] compressed_content;
+  delete[] compressed_content;
 
   return content;
 }
 
-}
-}
+}  // namespace treediff
+}  // namespace framework

@@ -1,8 +1,8 @@
 #ifndef FRAMEWORK_TREEDIFF_BAREBRANCH_H
 #define FRAMEWORK_TREEDIFF_BAREBRANCH_H
 
-#include "TFile.h"
 #include "TBranch.h"
+#include "TFile.h"
 
 namespace framework {
 namespace treediff {
@@ -34,15 +34,13 @@ class BareBranch {
    * and the full name will give us the name of
    * the sub branch and all its parent branches.
    */
-  const TString name() const {
-    return branch_->GetFullName();
-  }
+  const TString name() const { return branch_->GetFullName(); }
 
   /**
    * Do we and the passed BareBranch have the same name?
    */
   bool sameName(const BareBranch& other) const {
-    return name().EqualTo(other.name()); 
+    return name().EqualTo(other.name());
   }
 
   /**
@@ -67,7 +65,6 @@ class BareBranch {
   char* getContent(int i_basket, int& len) const;
 
  private:
-
   /**
    * The file that we are reading the data from.
    *
@@ -89,7 +86,7 @@ class BareBranch {
   TBranch* branch_;
 };
 
-}
-}
+}  // namespace treediff
+}  // namespace framework
 
-#endif // FRAMEWORK_TREEDIFF_BAREBRANCH_H
+#endif  // FRAMEWORK_TREEDIFF_BAREBRANCH_H

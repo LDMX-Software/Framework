@@ -1,8 +1,9 @@
 
 #include "Framework/TreeDiff/BareTree.h"
-#include "Framework/Exception/Exception.h"
 
 #include <set>
+
+#include "Framework/Exception/Exception.h"
 
 namespace framework {
 namespace treediff {
@@ -12,14 +13,14 @@ BareTree::BareTree(TFile* f, const TString& tree_name,
     : file_{f}, ignore_substrs_{ignore_substrs} {
   // first we get the tree from the file
   tree_ = (TTree*)file_->Get(tree_name);
-  
+
   // make sure we got a tree
   if (not tree_) {
-    EXCEPTION_RAISE("NullTree",
-        ("No tree named '" + tree_name + "' exists in file '"
-        + file_->GetName() + "'.").Data());
+    EXCEPTION_RAISE("NullTree", ("No tree named '" + tree_name +
+                                 "' exists in file '" + file_->GetName() + "'.")
+                                    .Data());
   }
-  
+
   // get the (flattened) list of branches wrapped with BareBranch
   branches_ = flatBranchList(tree_->GetListOfBranches());
 }
@@ -51,44 +52,44 @@ bool BareTree::compare(const BareTree& other) const {
           this->branches_diff_data_.push_back(our_br.name());
           other.branches_diff_data_.push_back(our_br.name());
         }
-        break; // leave after we find a name match
-      } // same name
-    }   // loop over their branches
+        break;  // leave after we find a name match
+      }         // same name
+    }           // loop over their branches
 
     if (not found_name_match) {
       // we weren't able to find a name match for this branch
       branches_only_here_.push_back(our_br.name());
     }
-  } // loop over our branches
+  }  // loop over our branches
 
   // check for branches only on the other tree
   for (const BareBranch& their_br : other.branches_) {
     // if branch is should not be ignored AND we couldn't
     // find a match, then this branch is only in the other tree
     if (not shouldIgnore(their_br) and
-        match_found.find(their_br.name()) == match_found.end()
-    ) {
+        match_found.find(their_br.name()) == match_found.end()) {
       other.branches_only_here_.push_back(their_br.name());
-    } // their branch was not found here
-  }   // loop over their branches
+    }  // their branch was not found here
+  }    // loop over their branches
 
   // perfect match is only when all three
   // containers of differences are empty
-  return (branches_only_here_.empty() 
-          and branches_diff_data_.empty() 
-          and other.branches_only_here_.empty());
+  return (branches_only_here_.empty() and branches_diff_data_.empty() and
+          other.branches_only_here_.empty());
 }
 
 std::vector<BareBranch> BareTree::flatBranchList(TObjArray* list) const {
   std::vector<BareBranch> flattened_list;
-  for (unsigned int i=0; i < list->GetEntries(); i++) {
+  for (unsigned int i = 0; i < list->GetEntries(); i++) {
     TBranch* sub_branch = (TBranch*)list->At(i);
     if (sub_branch->GetListOfBranches()->GetEntries() > 0) {
-      //recursion
-      std::vector<BareBranch> sub_list{flatBranchList(sub_branch->GetListOfBranches())};
-      flattened_list.insert( flattened_list.end(), sub_list.begin(), sub_list.end());
+      // recursion
+      std::vector<BareBranch> sub_list{
+          flatBranchList(sub_branch->GetListOfBranches())};
+      flattened_list.insert(flattened_list.end(), sub_list.begin(),
+                            sub_list.end());
     } else {
-      flattened_list.emplace_back(file_,sub_branch);
+      flattened_list.emplace_back(file_, sub_branch);
     }
   }
   return flattened_list;
@@ -101,5 +102,5 @@ bool BareTree::shouldIgnore(const BareBranch& b) const {
   return false;
 }
 
-}
-}
+}  // namespace treediff
+}  // namespace framework

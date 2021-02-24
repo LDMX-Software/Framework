@@ -3,11 +3,10 @@
 
 #include <vector>
 
-#include "TString.h"
-#include "TFile.h"
-#include "TTree.h"
-
 #include "Framework/TreeDiff/BareBranch.h"
+#include "TFile.h"
+#include "TString.h"
+#include "TTree.h"
 
 namespace framework {
 namespace treediff {
@@ -32,13 +31,15 @@ class BareTree {
    *
    * @param[in] f handle to file we are reading from
    * @param[in] tree_name name of tree in file to wrap
-   * @param[in] ignore_substrs list of sub-strings of branch names to ignore in any future comparison
+   * @param[in] ignore_substrs list of sub-strings of branch names to ignore in
+   * any future comparison
    */
-  BareTree(TFile* f, const TString& tree_name, const std::vector<TString>& ignore_substrs = {});
+  BareTree(TFile* f, const TString& tree_name,
+           const std::vector<TString>& ignore_substrs = {});
 
   /**
    * Do the comparison between two BareTrees.
-   * 
+   *
    * We don't modify the actual list of the branches
    * but we do modify the list of branches that are only
    * here and that differ in their data.
@@ -56,7 +57,7 @@ class BareTree {
    *
    * @note This is only filled during a comparison!
    */
-  const std::vector<TString> &getBranchesOnlyHere() const {
+  const std::vector<TString>& getBranchesOnlyHere() const {
     return branches_only_here_;
   }
 
@@ -66,7 +67,7 @@ class BareTree {
    *
    * @note This is only filled during a comparison!
    */
-  const std::vector<TString> &getBranchesDiffData() const {
+  const std::vector<TString>& getBranchesDiffData() const {
     return branches_diff_data_;
   }
 
@@ -134,10 +135,9 @@ class BareTree {
    * the other after a comparison is made.
    */
   mutable std::vector<TString> branches_diff_data_;
-
 };
 
-}
-}
+}  // namespace treediff
+}  // namespace framework
 
-#endif // FRAMEWORK_TREEDIFF_BARETREE_H
+#endif  // FRAMEWORK_TREEDIFF_BARETREE_H
