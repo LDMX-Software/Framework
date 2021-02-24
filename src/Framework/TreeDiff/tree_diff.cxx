@@ -7,8 +7,11 @@
 #include "Framework/Exception/Exception.h"
 #include "Framework/TreeDiff/BareTree.h"
 
+/**
+ * Print the usage of this executable to std::cout
+ */
 static inline void usage() {
-  std::cout << "Use: root-diff [-h,--help] [-i,--ignore class_name]" << std::endl;
+  std::cout << "Use: tree-diff [-h,--help] [-i,--ignore class_name]" << std::endl;
   std::cout << "               -t,--tree tree_name" << std::endl;
   std::cout << "               {file1.root} {file2.root}" << std::endl;
   std::cout << "  Display the objects that are different between the two input root files." << std::endl;
@@ -18,14 +21,23 @@ static inline void usage() {
   std::cout << "-t,--tree  Define name of tree to compare. REQUIRED." << std::endl;
 }
 
+/**
+ * Helper function for configuration error where
+ * an input flag isn't provided its required argument.
+ */
 static inline void needsArgAfter(const TString &arg) {
   usage();
   std::cout << "** Flag " << arg
     << " requires an argument after it. **" << std::endl;
 }
 
+/// return status when executable failed to run
 static const int FAILED_TO_RUN{127};
+
+/// return status for a perfect match
 static const int MATCH{0};
+
+/// return status for a successful run but failed match
 static const int MISMATCH{1};
 
 /**
@@ -35,7 +47,7 @@ static const int MISMATCH{1};
  * in two separate files.
  */
 int main(int argc, char *argv[]) {
-  std::set<TString> ignore_branches;
+  std::vector<TString> to_ignore;
   TString tree_name;
   std::vector<TString> file_names;
   for (int arg_i{1}; arg_i < argc; arg_i++) {
@@ -44,15 +56,15 @@ int main(int argc, char *argv[]) {
       usage();
       return 0;
     } else if (arg.EqualTo("-i") or arg.EqualTo("--ignore")) {
-      if (arg_i+1 > argc) {
+      if (arg_i+1 > argc or argv[arg_i+1][0] == '-') {
         needsArgAfter(arg);
         return FAILED_TO_RUN;
       }
-      ignore_branches.insert(argv[arg_i+1]);
+      to_ignore.emplace_back(argv[arg_i+1]);
       //shift arg index to skip name after flag
       arg_i++;
     } else if (arg.EqualTo("-t") or arg.EqualTo("--tree")) {
-      if (arg_i+1 > argc) {
+      if (arg_i+1 > argc or argv[arg_i+1][0] == '-') {
         needsArgAfter(arg);
         return FAILED_TO_RUN;
       }
@@ -78,8 +90,8 @@ int main(int argc, char *argv[]) {
     TFile f1(file_names.at(0));
     TFile f2(file_names.at(1));
 
-    framework::treediff::BareTree t1(&f1,tree_name);
-    framework::treediff::BareTree t2(&f2,tree_name);
+    framework::treediff::BareTree t1(&f1,tree_name,to_ignore);
+    framework::treediff::BareTree t2(&f2,tree_name,to_ignore);
 
     if (t1.compare(t2)) {
       //match successful, leave early

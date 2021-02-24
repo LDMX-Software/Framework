@@ -29,8 +29,12 @@ class BareTree {
   /**
    * Generate the list of branches that will need to
    * be compared.
+   *
+   * @param[in] f handle to file we are reading from
+   * @param[in] tree_name name of tree in file to wrap
+   * @param[in] ignore_substrs list of sub-strings of branch names to ignore in any future comparison
    */
-  BareTree(TFile* f, const TString& tree_name);
+  BareTree(TFile* f, const TString& tree_name, const std::vector<TString>& ignore_substrs = {});
 
   /**
    * Do the comparison between two BareTrees.
@@ -38,6 +42,12 @@ class BareTree {
    * We don't modify the actual list of the branches
    * but we do modify the list of branches that are only
    * here and that differ in their data.
+   *
+   * @see BareBranch::sameName and BareBranch::sameContent for
+   * how we compare individual branches.
+   *
+   * @param[in] other Another BareTree to compare ourselves to
+   * @return true if we have the same structure and content as other
    */
   bool compare(const BareTree& other) const;
 
@@ -80,6 +90,13 @@ class BareTree {
     branches_diff_data_.clear();
   }
 
+  /**
+   * Check if the input branch should be ignored.
+   *
+   * @return true if we should skip the branch
+   */
+  bool shouldIgnore(const BareBranch& b) const;
+
  private:
   /**
    * The file that we are reading the data from.
@@ -98,6 +115,14 @@ class BareTree {
    * The list of branches that have no sub-branches.
    */
   std::vector<BareBranch> branches_;
+
+  /**
+   * List of branch name sub-strings to ignore.
+   *
+   * The reason we use sub-strings is to avoid having
+   * to specify the pass name which we encode into the branch name.
+   */
+  std::vector<TString> ignore_substrs_;
 
   /**
    * Branches only in this tree map after a comparison is made.
