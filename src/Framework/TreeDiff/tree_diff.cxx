@@ -2,22 +2,22 @@
 #include <iostream>
 #include <set>
 
-#include "TString.h"
-
 #include "Framework/TreeDiff/Compare.h"
+#include "TString.h"
 
 /**
  * Print the usage of this executable to std::cout
  */
 static inline void usage() {
-  std::cout 
-    << "Use: tree-diff [-h,--help] [-i,--ignore s0]\n"
-    << "               -t,--tree name0 [-t,--tree name1 ...]\n"
-    << "               {file1.root} {file2.root}\n"
-    << "-h,--help  Print this help message and exit.\n"
-    << "-i,--ignore\n"
-    << "           Substrings of branches to ignore. Can specify more than once.\n"
-    << "-t,--tree  Define name(s) of tree(s) to compare. At least one required.\n";
+  std::cout << "Use: tree-diff [-h,--help] [-i,--ignore s0]\n"
+            << "               -t,--tree name0 [-t,--tree name1 ...]\n"
+            << "               {file1.root} {file2.root}\n"
+            << "-h,--help  Print this help message and exit.\n"
+            << "-i,--ignore\n"
+            << "           Substrings of branches to ignore. Can specify more "
+               "than once.\n"
+            << "-t,--tree  Define name(s) of tree(s) to compare. At least one "
+               "required.\n";
 }
 
 /**
@@ -79,10 +79,11 @@ int main(int argc, char* argv[]) {
 
   if (tree_names.empty()) {
     usage();
-    std::cerr << "** Need to specify at least one tree to compare **" << std::endl;
+    std::cerr << "** Need to specify at least one tree to compare **"
+              << std::endl;
     return framework::treediff::FAILED_TO_RUN;
   }
 
-  return framework::treediff::compare(file_names.at(0), file_names.at(1), 
-      tree_names, to_ignore);
+  return framework::treediff::compare(file_names.at(0), file_names.at(1),
+                                      tree_names, to_ignore);
 }

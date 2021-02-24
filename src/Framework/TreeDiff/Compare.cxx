@@ -1,11 +1,11 @@
 
+#include "Framework/TreeDiff/Compare.h"
+
 #include <iostream>
 
-#include "TFile.h"
-
 #include "Framework/Exception/Exception.h"
-#include "Framework/TreeDiff/Compare.h"
 #include "Framework/TreeDiff/BareTree.h"
+#include "TFile.h"
 
 namespace framework {
 namespace treediff {
@@ -13,7 +13,6 @@ namespace treediff {
 int compare(const TString& f1, const TString& f2,
             const std::vector<TString>& trees,
             const std::vector<TString>& to_ignore) {
-
   try {
     /**
      * Loading the files causes ROOT to print
@@ -24,22 +23,22 @@ int compare(const TString& f1, const TString& f2,
     TFile file_1(f1);
     if (not file_1.IsOpen()) {
       EXCEPTION_RAISE("BadFile",
-          ("File '"+f1+"' was not abled to be opened.").Data());
+                      ("File '" + f1 + "' was not abled to be opened.").Data());
     }
 
     TFile file_2(f2);
     if (not file_2.IsOpen()) {
       EXCEPTION_RAISE("BadFile",
-          ("File '"+f2+"' was not abled to be opened.").Data());
+                      ("File '" + f2 + "' was not abled to be opened.").Data());
     }
 
     bool mismatch{false};
     for (auto const& tree_name : trees) {
-      BareTree tree_1(&file_1,tree_name,to_ignore);
-      BareTree tree_2(&file_2,tree_name,to_ignore);
-      
+      BareTree tree_1(&file_1, tree_name, to_ignore);
+      BareTree tree_2(&file_2, tree_name, to_ignore);
+
       if (tree_1.compare(tree_2)) {
-        //success! go to next tree immediately
+        // success! go to next tree immediately
         continue;
       }
 
@@ -49,29 +48,30 @@ int compare(const TString& f1, const TString& f2,
       std::cout << tree_name << " mismatched between files" << std::endl;
       auto only_in_file_1 = tree_1.getBranchesOnlyHere();
       if (not only_in_file_1.empty()) {
-        std::cout << "== Branches Only in '" 
-          << file_1.GetName() << "' ==" << std::endl;
+        std::cout << "== Branches Only in '" << file_1.GetName()
+                  << "' ==" << std::endl;
         for (const auto& b : only_in_file_1) std::cout << b << std::endl;
       }
-  
+
       auto only_in_file_2 = tree_2.getBranchesOnlyHere();
       if (not only_in_file_2.empty()) {
-        std::cout << "== Branches Only in '" 
-          << file_2.GetName() << "' ==" << std::endl;
+        std::cout << "== Branches Only in '" << file_2.GetName()
+                  << "' ==" << std::endl;
         for (const auto& b : only_in_file_2) std::cout << b << std::endl;
       }
-  
+
       auto diff_branches = tree_1.getBranchesDiffData();
       if (not diff_branches.empty()) {
         std::cout << "== Branches with different content ==" << std::endl;
         for (const auto& b : diff_branches) std::cout << b << std::endl;
       }
       std::cout << std::endl;
-
     }
 
-    if (mismatch) return MISMATCH;
-    else return MATCH;
+    if (mismatch)
+      return MISMATCH;
+    else
+      return MATCH;
 
   } catch (framework::exception::Exception& e) {
     std::cerr << "[" << e.name() << "] : " << e.message() << "\n"
@@ -82,6 +82,5 @@ int compare(const TString& f1, const TString& f2,
   }
 }
 
-
-}
-}
+}  // namespace treediff
+}  // namespace framework

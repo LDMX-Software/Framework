@@ -36,7 +36,7 @@ int compare(const TString& f1, const TString& f2,
             const std::vector<TString>& trees,
             const std::vector<TString>& to_ignore);
 
-}
-}
+}  // namespace treediff
+}  // namespace framework
 
 #endif

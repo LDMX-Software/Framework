@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
 #include <iostream>
 #include <set>
 
@@ -14,26 +15,27 @@
 //-------------//
 //   ldmx-sw   //
 //-------------//
-#include "Framework/Exception/Exception.h"
-#include "Framework/TreeDiff/Compare.h"
 #include "Framework/ConfigurePython.h"
+#include "Framework/Exception/Exception.h"
 #include "Framework/Process.h"
+#include "Framework/TreeDiff/Compare.h"
 
 /**
  * Print the usage of this executable to std::cout
  */
 static inline void usage() {
-  std::cout 
-    << "Use: test-fire [-h,--help] [-i,--ignore b0]\n"
-    << "               {config.py} {output.root}\n"
-    << "-h,--help  Print this help message and exit.\n"
-    << "-i,--ignore\n"
-    << "           Branch name substring to ignore. Can specify more than once.\n"
-    << "config.py  Configuration script to run.\n"
-    << "           Should take the name of the output file as its only argument."
-    << "output.root\n"
-    << "           Ouput file that config.py should generate."
-    << std::endl;
+  std::cout << "Use: test-fire [-h,--help] [-i,--ignore b0]\n"
+            << "               {config.py} {output.root}\n"
+            << "-h,--help  Print this help message and exit.\n"
+            << "-i,--ignore\n"
+            << "           Branch name substring to ignore. Can specify more "
+               "than once.\n"
+            << "config.py  Configuration script to run.\n"
+            << "           Should take the name of the output file as its only "
+               "argument."
+            << "output.root\n"
+            << "           Ouput file that config.py should generate."
+            << std::endl;
 }
 
 /**
@@ -42,10 +44,8 @@ static inline void usage() {
  */
 static inline void needsArgAfter(const TString& arg) {
   usage();
-  std::cout 
-    << "** Flag " << arg 
-    << " requires an argument after it. **"
-    << std::endl;
+  std::cout << "** Flag " << arg << " requires an argument after it. **"
+            << std::endl;
 }
 
 /**
@@ -53,10 +53,7 @@ static inline void needsArgAfter(const TString& arg) {
  * These need to match the names of the trees in an
  * output file _exactly_.
  */
-static const std::vector<TString> trees_to_check = {
-  "LDMX_Events",
-  "LDMX_Run"
-};
+static const std::vector<TString> trees_to_check = {"LDMX_Events", "LDMX_Run"};
 
 /**
  * test-fire
@@ -67,12 +64,9 @@ static const std::vector<TString> trees_to_check = {
 int main(int argc, char* argv[]) {
   // start with an ignore list that ignores
   // the time stamps
-  std::vector<TString> to_ignore = {
-    "EventHeader.timestamp_",
-    "RunHeader.runStart_",
-    "RunHeader.runEnd_",
-    "RunHeader.softwareTag_"
-  };
+  std::vector<TString> to_ignore = {"EventHeader.timestamp_",
+                                    "RunHeader.runStart_", "RunHeader.runEnd_",
+                                    "RunHeader.softwareTag_"};
   std::vector<TString> positional_args;
   for (int arg_i{1}; arg_i < argc; arg_i++) {
     TString arg{argv[arg_i]};
@@ -98,7 +92,7 @@ int main(int argc, char* argv[]) {
     for (const auto& a : positional_args) std::cerr << a << " ";
     std::cerr << std::endl;
     std::cerr << "** Need to specify two files : "
-      << "a config script and the expected output file **" << std::endl;
+              << "a config script and the expected output file **" << std::endl;
     return framework::treediff::FAILED_TO_RUN;
   }
 
@@ -106,16 +100,16 @@ int main(int argc, char* argv[]) {
   TString output_config_should_match = positional_args.at(1);
   TString output_config_generated = output_config_should_match + ".test";
 
-  char *cstr_translation = new char[output_config_generated.Length()+1];
+  char* cstr_translation = new char[output_config_generated.Length() + 1];
   strcpy(cstr_translation, output_config_generated.Data());
-  char *config_args[1] = { cstr_translation };
+  char* config_args[1] = {cstr_translation};
 
   // CLI arguments have been parsed, let's run the process
 
   framework::ProcessHandle p;
   try {
-    framework::ConfigurePython cfg(config.Data(),config_args,1);
-    delete [] cstr_translation;
+    framework::ConfigurePython cfg(config.Data(), config_args, 1);
+    delete[] cstr_translation;
     p = cfg.makeProcess();
   } catch (framework::exception::Exception& e) {
     std::cerr << "Configuration Error [" << e.name() << "] : " << e.message()
@@ -143,7 +137,8 @@ int main(int argc, char* argv[]) {
     //  where logging is closed, so we can do one more error message and then
     //  close it.
     auto theLog_{framework::logging::makeLogger(
-        "test-fire")};  // ldmx_log macro needs this variable to be named 'theLog_'
+        "test-fire")};  // ldmx_log macro needs this variable to be named
+                        // 'theLog_'
     ldmx_log(fatal) << "[" << e.name() << "] : " << e.message() << "\n"
                     << "  at " << e.module() << ":" << e.line() << " in "
                     << e.function() << "\nStack trace: " << std::endl
@@ -155,7 +150,7 @@ int main(int argc, char* argv[]) {
   // get here when we successfully finish running.
   // This means we can move on to comparison
 
-  return framework::treediff::compare(
-      output_config_should_match, output_config_generated,
-      trees_to_check, to_ignore);
+  return framework::treediff::compare(output_config_should_match,
+                                      output_config_generated, trees_to_check,
+                                      to_ignore);
 }
