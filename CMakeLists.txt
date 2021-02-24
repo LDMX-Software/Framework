@@ -136,3 +136,7 @@ setup_library(module Framework name TreeDiff
 add_executable(tree-diff ${PROJECT_SOURCE_DIR}/src/Framework/TreeDiff/tree_diff.cxx)
 target_link_libraries(tree-diff PRIVATE Framework::TreeDiff)
 install(TARGETS tree-diff DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+add_executable(test-fire ${PROJECT_SOURCE_DIR}/src/Framework/Testing/test_fire.cxx)
+target_link_libraries(test-fire PRIVATE Framework::TreeDiff Framework::Framework)
+install(TARGETS test-fire DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
