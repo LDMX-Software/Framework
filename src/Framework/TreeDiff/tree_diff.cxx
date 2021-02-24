@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 
     auto only_in_file_2 = t2.getBranchesOnlyHere();
     if (not only_in_file_2.empty()) {
-      std::cout << "== Objects Only in '" << file_names.at(1)
+      std::cout << "== Branches Only in '" << file_names.at(1)
                 << "'==" << std::endl;
       for (const auto& b : only_in_file_2) std::cout << b << std::endl;
     }

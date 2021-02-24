@@ -81,33 +81,41 @@ char* BareBranch::getContent(int i_basket, int& len) const {
         + " from branch " + name() + " in file " + file_->GetName()).Data());
   }
 
+  /* don't try to uncompress
+   * helpful if decompression is being dramatic
   len = compressed_len;
   return compressed_content;
-  /*
+  */
+
   char *content;
   if (basket->GetObjlen() > compressed_len) {
     //need to de-compress
     len = basket->GetObjlen();
     content = new char[len];
 
-    // IDK what these mean, got to look it up
-    int nin, nout{0}, noutot{0}, ncontent;
-    while (true) {
-      // get information on how content was compressed
-      R__unzip_header(&nin, (unsigned char *)content, &ncontent);
-      // Actually uncompress some content
-      R__unzip(&nin, (unsigned char *)content, &ncontent, (unsigned char *)compressed_content, &nout);
-      if (!nout) {
-        //all done
-        break;
-      }
-      noutot += nout;
-      if (noutot >= len) {
-        // all done
-        break;
-      }
-      compressed_content += nin;
-      content += nout;
+    /**
+     * unzipped_len should end up being equal to decompressed_len
+     * but they should be separate so that we can check if there was
+     * an error.
+     *
+     * Both of these should also be equal to the length of the object
+     * (len == basket->GetObjlen()), but again, we want to be safe
+     * and make sure there isn't any funny business.
+     */
+    int unzipped_len, decompressed_len;
+    // get information on how content was compressed
+    int rc = R__unzip_header(&compressed_len, (unsigned char *)compressed_content, &decompressed_len);
+    if (rc != 0) {
+      EXCEPTION_RAISE("UnzipFail",
+          ("Failed to de-compress basket " + std::to_string(i_basket)
+          + " from branch " + name()).Data());
+    }
+    // Actually uncompress some content
+    R__unzip(&compressed_len, (unsigned char *)compressed_content, &decompressed_len, (unsigned char *)content, &unzipped_len);
+    if (unzipped_len == 0) {
+      EXCEPTION_RAISE("UnzipFail",
+          ("Failed to de-compress basket " + std::to_string(i_basket)
+          + " from branch " + name()).Data());
     }
 
   } else {
@@ -120,7 +128,6 @@ char* BareBranch::getContent(int i_basket, int& len) const {
   delete [] compressed_content;
 
   return content;
-  */
 }
 
 }
