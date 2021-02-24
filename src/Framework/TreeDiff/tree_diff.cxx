@@ -11,14 +11,13 @@
  */
 static inline void usage() {
   std::cout 
-    << "Use: tree-diff [-h,--help] [-i,--ignore class_name]"
-    << "               -t,--tree tree_name\n"
+    << "Use: tree-diff [-h,--help] [-i,--ignore s0]\n"
+    << "               -t,--tree name0 [-t,--tree name1 ...]\n"
     << "               {file1.root} {file2.root}\n"
     << "-h,--help  Print this help message and exit.\n"
     << "-i,--ignore\n"
-    << "           Name of class to ignore. Can specify more than once.\n"
-    << "-t,--tree  Define name of tree to compare. One or more required.\n"
-    << std::endl;
+    << "           Substrings of branches to ignore. Can specify more than once.\n"
+    << "-t,--tree  Define name(s) of tree(s) to compare. At least one required.\n";
 }
 
 /**
@@ -71,12 +70,17 @@ int main(int argc, char* argv[]) {
 
   if (file_names.size() != 2) {
     usage();
+    std::cerr << "Files Given: ";
+    for (auto const& f : file_names) std::cerr << f << " ";
+    std::cerr << std::endl;
     std::cerr << "** Need to specify exactly two files **" << std::endl;
+    return framework::treediff::FAILED_TO_RUN;
   }
 
   if (tree_names.empty()) {
     usage();
-    std::cerr << "** Need to specify at least one TTree to compare **" << std::endl;
+    std::cerr << "** Need to specify at least one tree to compare **" << std::endl;
+    return framework::treediff::FAILED_TO_RUN;
   }
 
   return framework::treediff::compare(file_names.at(0), file_names.at(1), 

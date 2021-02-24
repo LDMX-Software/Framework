@@ -24,11 +24,11 @@
  */
 static inline void usage() {
   std::cout 
-    << "Use: test-fire [-h,--help] [-i,--ignore class_name]\n"
-    << "               {config.py} {output.root}"
+    << "Use: test-fire [-h,--help] [-i,--ignore b0]\n"
+    << "               {config.py} {output.root}\n"
     << "-h,--help  Print this help message and exit.\n"
     << "-i,--ignore\n"
-    << "           Name of class to ignore. Can specify more than once.\n"
+    << "           Branch name substring to ignore. Can specify more than once.\n"
     << "config.py  Configuration script to run.\n"
     << "           Should take the name of the output file as its only argument."
     << "output.root\n"
@@ -65,7 +65,14 @@ static const std::vector<TString> trees_to_check = {
  * still produces the same output event file.
  */
 int main(int argc, char* argv[]) {
-  std::vector<TString> to_ignore;
+  // start with an ignore list that ignores
+  // the time stamps
+  std::vector<TString> to_ignore = {
+    "EventHeader.timestamp_",
+    "RunHeader.runStart_",
+    "RunHeader.runEnd_",
+    "RunHeader.softwareTag_"
+  };
   std::vector<TString> positional_args;
   for (int arg_i{1}; arg_i < argc; arg_i++) {
     TString arg{argv[arg_i]};
@@ -87,8 +94,12 @@ int main(int argc, char* argv[]) {
 
   if (positional_args.size() != 2) {
     usage();
+    std::cerr << " Positional Arguments: ";
+    for (const auto& a : positional_args) std::cerr << a << " ";
+    std::cerr << std::endl;
     std::cerr << "** Need to specify two files : "
       << "a config script and the expected output file **" << std::endl;
+    return framework::treediff::FAILED_TO_RUN;
   }
 
   TString config = positional_args.at(0);

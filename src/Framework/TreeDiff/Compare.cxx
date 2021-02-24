@@ -22,7 +22,16 @@ int compare(const TString& f1, const TString& f2,
      * Can we silence them?
      */
     TFile file_1(f1);
+    if (not file_1.IsOpen()) {
+      EXCEPTION_RAISE("BadFile",
+          ("File '"+f1+"' was not abled to be opened.").Data());
+    }
+
     TFile file_2(f2);
+    if (not file_2.IsOpen()) {
+      EXCEPTION_RAISE("BadFile",
+          ("File '"+f2+"' was not abled to be opened.").Data());
+    }
 
     bool mismatch{false};
     for (auto const& tree_name : trees) {
