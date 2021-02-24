@@ -42,7 +42,7 @@ class BareBranch {
    * Do we and the passed BareBranch have the same name?
    */
   bool sameName(const BareBranch& other) const {
-    return name().CompareTo(other.name()); 
+    return name().EqualTo(other.name()); 
   }
 
   /**

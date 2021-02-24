@@ -80,6 +80,8 @@ char* BareBranch::getContent(int i_basket, int& len) const {
         + " from branch " + name() + " in file " + file_->GetName()).Data());
   }
 
+  return compressed_content;
+  /*
   char *content;
   if (basket->GetObjlen() > compressed_len) {
     //need to de-compress
@@ -116,6 +118,7 @@ char* BareBranch::getContent(int i_basket, int& len) const {
   delete [] compressed_content;
 
   return content;
+  */
 }
 
 }

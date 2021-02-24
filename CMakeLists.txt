@@ -132,3 +132,7 @@ setup_library(module Framework name TreeDiff
               dependencies Framework::Exception
                            ROOT::Core
                            ROOT::TreePlayer)
+
+add_executable(tree-diff ${PROJECT_SOURCE_DIR}/src/Framework/TreeDiff/tree_diff.cxx)
+target_link_libraries(tree-diff PRIVATE Framework::TreeDiff)
+install(TARGETS tree-diff DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
