@@ -6,6 +6,14 @@
 #include "TString.h"
 
 namespace framework {
+
+/**
+ * @namespace treediff
+ *
+ * An extension to framework for comparing
+ * trees in two separate files that are hypothesized
+ * to be identical.
+ */
 namespace treediff {
 
 /// return status when we failed to run
@@ -25,6 +33,10 @@ static const int MISMATCH{1};
  *
  * @see FAILED_TO_RUN, MATCH, and MISMATCH for
  * the different return statuses.
+ *
+ * @see framework::treediff::BareTree for how
+ * we 'import' the data and compare it across
+ * files.
  *
  * @param[in] f1 name of first file
  * @param[in] f2 name of second file

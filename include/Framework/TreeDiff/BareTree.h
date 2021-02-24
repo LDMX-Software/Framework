@@ -18,6 +18,9 @@ namespace treediff {
  *
  * 1. It is faster than creating the necessary objects.
  * 2. We don't have to import that ROOT dictionary here.
+ * 3. Comparing buffers is safer and less prone to bugs
+ *    than writing custom comparison operators for all
+ *    our objects.
  *
  * In the process of checking the equality of bare trees,
  * we can modify some member variables allowing us to look into
@@ -80,6 +83,13 @@ class BareTree {
    * higher level branches into sub-branches. The sub-branches are
    * actually where all the baskets and data are stored, so we
    * need a list of them.
+   *
+   * This function is recursive because sometimes ROOT is
+   * recursive.
+   *
+   * @param[in] branch_list List of branches 
+   * retrieved from TBranch::GetListOfBranches()
+   * @returns list of flattened branches wrapped in our BareBranch
    */
   std::vector<BareBranch> flatBranchList(TObjArray* branch_list) const;
 

@@ -32,7 +32,7 @@ static inline void usage() {
                "than once.\n"
             << "config.py  Configuration script to run.\n"
             << "           Should take the name of the output file as its only "
-               "argument."
+               "argument.\n"
             << "output.root\n"
             << "           Ouput file that config.py should generate."
             << std::endl;
@@ -151,6 +151,7 @@ int main(int argc, char* argv[]) {
   // This means we can move on to comparison
 
   return framework::treediff::compare(output_config_should_match,
-                                      output_config_generated, trees_to_check,
+                                      output_config_generated, 
+                                      trees_to_check,
                                       to_ignore);
 }
