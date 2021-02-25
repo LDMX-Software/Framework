@@ -69,8 +69,8 @@ class BareBranch {
    *    sequentially and instead looking at this branch entirely.
    * 2. Make sure the number of baskets is the same.
    *    Since the splitting and compression of data is completely deterministic
-   *    in ROOT, *I think* this will only fail if the splitting or compression
-   *    settings of our EventFiles changes.
+   *    in ROOT, *I think* this will only fail if the splitlevel or buffsize of our
+   *    branches change or if the configuration of ROOT's memory changes.
    * 3. Compare the decompressed buffers of each of the baskets in sequence.
    *    If any of the baskets don't match in length (amount of data)
    *    or content (the data itself), we fail the comparison.
@@ -81,6 +81,12 @@ class BareBranch {
    * It also makes intuitive sense that the baskets would be in the same order
    * since the data was generalized and serialized in a deterministic
    * fashion.
+   *
+   * @note This method of comparison assumes that the splitlevel
+   * and buffsize input into the TTree::Branch method when the branches
+   * were being created are the same. In other words, it is likely
+   * that two branches with the same data but different splitlevel
+   * and/or buffsize will fail the comparison.
    *
    * @see getContent for how we get the data from a basket
    * @throws Exceptions if reading buffers for this branch fails.
