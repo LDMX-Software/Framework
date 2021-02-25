@@ -13,6 +13,16 @@ namespace framework {
  * An extension to framework for comparing
  * trees in two separate files that are hypothesized
  * to be identical.
+ *
+ * Similar to regular `diff` or `git diff`,
+ * this method of comparison is really only helpful
+ * if the trees being compared are (in some sense) "close"
+ * to being identical. 
+ *
+ * For example, if the two trees only
+ * differ by their number of entries (say one tree has one
+ * more event than the other), all of the branches will be
+ * listed as having "different content".
  */
 namespace treediff {
 
@@ -37,6 +47,10 @@ static const int MISMATCH{1};
  * @see framework::treediff::BareTree for how
  * we 'import' the data and compare it across
  * files.
+ *
+ * This function catches all of our own Execeptions,
+ * so it safe to simply return this fuction at the end
+ * of your main (after parsing any command-line inputs).
  *
  * @param[in] f1 name of first file
  * @param[in] f2 name of second file

@@ -10,13 +10,11 @@ namespace treediff {
 /**
  * Branch *without* access to the data in C++ form.
  *
- * This gives us the ability to access the serialized
- * data from the corresponding branch of the same name
- * in the tree.
+ * This gives us the ability to access the serialized data from the 
+ * corresponding branch of the same name in the tree.
  *
- * We assume that this is the "lowest-level" branch,
- * i.e. the branch we wrap here *does not* have any
- * child branches.
+ * We assume that this is the "lowest-level" branch, 
+ * i.e. the branch we wrap here *does not* have any child branches.
  */
 class BareBranch {
  public:
@@ -33,9 +31,14 @@ class BareBranch {
    * and the full name will give us the name of
    * the sub branch and all its parent branches.
    *
-   * This allows us to remove any potential conflicts
+   * This allows us to ignore any potential conflicts
    * when two different branches may have the same
-   * sub-branch name.
+   * sub-branch name e.g. two branches of the same type.
+   *
+   * @note We could think about implementing a method of
+   * removing the pass name from the full branch name here.
+   * I'm opposed to this, but that would make it easier to
+   * compare two files whose only difference is the pass name.
    */
   const TString name() const { return branch_->GetFullName(); }
 
@@ -52,6 +55,13 @@ class BareBranch {
   /**
    * Do we and the passed BareBranch have the same content?
    *
+   * We don't do smart things like checking if the two branches
+   * share any content. It is a simple manner of checking if
+   * *any* of the serialized data differs. This includes the case
+   * where one branch just happens to have more entries. Even
+   * if one branch is a perfect subset of another, since they
+   * are different sizes this comparison will fail.
+   *
    * This is the heavy duty part, so pay attention.
    *
    * 1. Load the baskets of both our branch and their branch into memory.
@@ -59,15 +69,21 @@ class BareBranch {
    *    sequentially and instead looking at this branch entirely.
    * 2. Make sure the number of baskets is the same.
    *    Since the splitting and compression of data is completely deterministic
-   *    in ROOT, this will only fail if the splitting or compression
-   *    settings of our EventFiles changes (probably).
+   *    in ROOT, *I think* this will only fail if the splitting or compression
+   *    settings of our EventFiles changes.
    * 3. Compare the decompressed buffers of each of the baskets in sequence.
    *    If any of the baskets don't match in length (amount of data)
-   *    or content (the data itself), we return faile the comparison.
+   *    or content (the data itself), we fail the comparison.
    * 4. Clean up after ourselves by deleting buffers and dropping baskets.
    *
    * @note I assume that our baskets and their baskets are in the same order.
    * I don't know if this is a safe assumption, but it seems to work.
+   * It also makes intuitive sense that the baskets would be in the same order
+   * since the data was generalized and serialized in a deterministic
+   * fashion.
+   *
+   * @see getContent for how we get the data from a basket
+   * @throws Exceptions if reading buffers for this branch fails.
    *
    * @param[in] other another BareBranch to check against
    * @returns true if our content matches other's perfectly
@@ -93,6 +109,12 @@ class BareBranch {
    * @throws Exception if we can't read the basket from the file we have.
    * @throws Exception if we aren't able to decompress the buffer.
    *
+   * Fun Fact: Since a 'char' is 1 byte, the "length" of the buffer
+   * array is _also_ the "size" of the data in bytes. Sometimes, I
+   * use the word "length" becuase I'm thinking of the buffer as an
+   * array of char and sometimes I use "size" because I'm thinking
+   * of the data that is being stored.
+   *
    * @param[in] i_basket Index of basket to read in
    * @param[out] len Length of buffer read in
    * @returns newly allocated buffer of length len
@@ -112,7 +134,7 @@ class BareBranch {
   /**
    * A handle to the branch we are reading.
    *
-   * Used for getting the list of baskets of data.
+   * Used for getting the baskets of data.
    */
   TBranch* branch_;
 };

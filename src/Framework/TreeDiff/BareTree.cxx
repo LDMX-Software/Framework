@@ -30,6 +30,16 @@ bool BareTree::compare(const BareTree& other) const {
   this->newComparison();
   other.newComparison();
 
+  /**
+   * Check size of the two trees.
+   * If the size differs, issue a warning that the comparison is ill-formed.
+   */
+  if (this->tree_->GetEntriesFast() != other.tree_->GetEntriesFast()) {
+    std::cerr << "[ BareTree ] WARN : Comparing trees of different sizes.\n"
+                 "  This comparison will fail and list all branches as fails!"
+              << std::endl;
+  }
+
   // store branch names where we found a name-match
   // between the trees
   std::set<TString> match_found;

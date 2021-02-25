@@ -32,7 +32,7 @@ int compare(const TString& f1, const TString& f2,
                       ("File '" + f2 + "' was not abled to be opened.").Data());
     }
 
-    bool mismatch{false};
+    int exit_status{MATCH};
     for (auto const& tree_name : trees) {
       BareTree tree_1(&file_1, tree_name, to_ignore);
       BareTree tree_2(&file_2, tree_name, to_ignore);
@@ -43,7 +43,7 @@ int compare(const TString& f1, const TString& f2,
       }
 
       // match not successful, let's print what was wrong
-      mismatch = true;
+      exit_status = MISMATCH;
 
       std::cout << tree_name << " mismatched between files" << std::endl;
       auto only_in_file_1 = tree_1.getBranchesOnlyHere();
@@ -68,10 +68,7 @@ int compare(const TString& f1, const TString& f2,
       std::cout << std::endl;
     }
 
-    if (mismatch)
-      return MISMATCH;
-    else
-      return MATCH;
+    return exit_status;
 
   } catch (framework::exception::Exception& e) {
     std::cerr << "[" << e.name() << "] : " << e.message() << "\n"

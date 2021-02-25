@@ -18,12 +18,19 @@ bool BareBranch::sameContent(const BareBranch& other) const {
   // a certain threshold, each basket corresponds to a
   // certain number of entries in the branch compressed
   // and saved into the output file
-  int num_our_baskets = this->branch_->LoadBaskets();
+  int num_our_baskets   = this->branch_->LoadBaskets();
   int num_their_baskets = other.branch_->LoadBaskets();
 
   if (num_our_baskets != num_their_baskets) {
     // mismatching number of baskets
     // probably due to change in compression level/algo
+    // (if the files are supposed to be the same)
+    
+    // make sure to drop all our baskets
+    // so that ROOT knows we don't care about those objects
+    // anymore
+    this->branch_->DropBaskets("all");
+    other.branch_->DropBaskets("all");
     return false;
   }
 
@@ -31,14 +38,20 @@ bool BareBranch::sameContent(const BareBranch& other) const {
    * WARN
    * We are assuming that our baskets and their baskets
    * are in the same order!! I don't know if this is a safe
-   * assumption.
+   * assumption. I think it is, but I haven't found any
+   * documentation assuring me of this fact.
    */
   bool content_match{true};
   for (int i_basket{0}; i_basket < num_our_baskets; i_basket++) {
     int our_len{0}, their_len{0};
-    char* our_buff = this->getContent(i_basket, our_len);
+    char* our_buff   = this->getContent(i_basket, our_len  );
     char* their_buff = other.getContent(i_basket, their_len);
 
+    /**
+     * The contents of these two baskets match if
+     *  (1) they are the same size (or equivalently, length) AND
+     *  (2) the data stored is equivalent bit-by-bit
+     */
     content_match =
         (our_len == their_len) and (memcmp(our_buff, their_buff, our_len) == 0);
 
@@ -75,7 +88,7 @@ char* BareBranch::getContent(int i_basket, int& len) const {
   if (file_->ReadBuffer(compressed_content,
                         basket->GetSeekKey() + basket->GetKeylen(),
                         compressed_len)) {
-    // return status of 1 is a failure
+    // non-zero return status is a failure
     delete[] compressed_content;
     EXCEPTION_RAISE("ReadFail",
                     ("Failure to read basked " + std::to_string(i_basket) +

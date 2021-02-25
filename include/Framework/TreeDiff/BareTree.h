@@ -25,12 +25,21 @@ namespace treediff {
  * In the process of checking the equality of bare trees,
  * we can modify some member variables allowing us to look into
  * the form of an in-equality much better.
+ *
+ * Similar to regular `diff` or `git diff`,
+ * this method of comparison is really only helpful
+ * if the trees being compared are (in some sense) "close"
+ * to being identical. 
+ *
+ * For example, if the two trees only
+ * differ by their number of entries (say one tree has one
+ * more event than the other), all of the branches will be
+ * listed as having "different content".
  */
 class BareTree {
  public:
   /**
-   * Generate the list of branches that will need to
-   * be compared.
+   * Generate the list of branches that will need to be compared.
    *
    * @param[in] f handle to file we are reading from
    * @param[in] tree_name name of tree in file to wrap
@@ -49,6 +58,12 @@ class BareTree {
    *
    * @see BareBranch::sameName and BareBranch::sameContent for
    * how we compare individual branches.
+   *
+   * @throws Exception if reading buffers in branches fails.
+   *
+   * We warn the user if the two trees being compared are different sizes.
+   * This is because the comparison *will* fail and list *all* branches
+   * as having different content.
    *
    * @param[in] other Another BareTree to compare ourselves to
    * @return true if we have the same structure and content as other
@@ -82,10 +97,11 @@ class BareTree {
    * When ROOT knows how to, it saves space and time by "splitting"
    * higher level branches into sub-branches. The sub-branches are
    * actually where all the baskets and data are stored, so we
-   * need a list of them.
+   * need a list of them. Moreover, sometimes this "splitting"
+   * is done recursively when a top-level class has another
+   * "splitt-able" class as a member.
    *
-   * This function is recursive because sometimes ROOT is
-   * recursive.
+   * This function is recursive because sometimes ROOT is recursive.
    *
    * @param[in] branch_list List of branches 
    * retrieved from TBranch::GetListOfBranches()
@@ -95,6 +111,12 @@ class BareTree {
 
   /**
    * Reset comparison objects
+   *
+   * Currently, this is not needed since both executables that
+   * use this comparison method only execute one comparison;
+   * nevertheless, I could forsee the addition of multiple
+   * comparisons in one run e.g. to do a comparison between
+   * all pairs of three files.
    */
   void newComparison() const {
     branches_only_here_.clear();
