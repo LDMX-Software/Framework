@@ -1,4 +1,8 @@
-# Framework
+# fire :fire:
+
+**F**ramework for s**I**mulation and **R**construction of **E**vents.
+
+It's a stretch, but the command's name is cool.
 
 A event-by-event processing Framework using CERN's [ROOT](https://github.com/root-project/root) and C++17.
 

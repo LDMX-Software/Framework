@@ -3,14 +3,12 @@ cmake_minimum_required(VERSION 3.12)
 
 # Set the project name
 project(
-  Framework
-  VERSION 2.1.0
-  DESCRIPTION "Framework used to define processing pipelines and modules."
+  fire
+  VERSION 1.0.0
+  DESCRIPTION "Framework for sImulation and Reconstruction of Events"
   LANGUAGES CXX)
 
-setup_library(module Framework name Exception sources
-              ${PROJECT_SOURCE_DIR}/src/Framework/Exception/Exception.cxx)
-
+setup_library(module Framework name Exception)
 setup_library(module Framework name Configure interface)
 
 # Search for the Python3 library
