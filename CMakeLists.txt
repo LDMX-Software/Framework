@@ -8,6 +8,9 @@ project(
   DESCRIPTION "Framework for sImulation and Reconstruction of Events"
   LANGUAGES CXX)
 
+list(APPEND CMAKE_MODULE_PATH ${fire_SOURCE_DIR}/cmake/)
+include(BuildMacros RESULT_VARIABLE build_macros_found)
+
 setup_library(module Framework name Exception)
 setup_library(module Framework name Configure interface)
 
@@ -63,15 +66,11 @@ set_target_properties(
              CXX_EXTENSIONS NO)
 
 # Add the fire executable
-add_executable(fire ${PROJECT_SOURCE_DIR}/src/Framework/fire.cxx)
-
-# Link to the Framework library
+add_executable(fire ${PROJECT_SOURCE_DIR}/app/fire.cxx)
 target_link_libraries(fire PRIVATE Framework::Framework)
-
-# Install the fire executable
 install(TARGETS fire DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 # Setup the test
 setup_test(dependencies Framework::Framework)
 
-setup_python(package_name ${PYTHON_PACKAGE_NAME}/Framework)
+setup_python(package_name fire)

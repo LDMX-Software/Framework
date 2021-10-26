@@ -262,7 +262,7 @@ class Bus {
    *
    * ## Basic Structure
    *
-   * The method of specializing the clear, post_update, and attach methods
+   * The method of specializing the clear, and attach methods
    * to the different types of passenger's baggage is derived from
    * <a
    * href="https://www.fluentcpp.com/2017/08/15/function-templates-partial-specialization-cpp/"
@@ -351,17 +351,10 @@ class Bus {
     /**
      * Update this passenger's baggage.
      *
-     * @see post_update
-     * to allow the different types to take actions after the
-     * baggage is updated. For example, the vector specialization
-     * of post_update uses this opportunity to sort the
-     * list of objects.
-     *
      * @param[in] updated_obj BaggageType to copy into our object
      */
     void update(const BaggageType& updated_obj) {
       *baggage_ = updated_obj;
-      post_update(the_type<BaggageType>());
     }
 
     /**
@@ -635,52 +628,16 @@ class Bus {
     }
 
     /**
-     * Clear a general class by calling its 'Clear' method.
+     * Clear a general class by calling its 'clear' method.
      *
-     * @note The capitalization of 'Clear' is a relic of
-     * when the event bus objects needed to inherit from TObject.
-     * We _could_ simplify this code by renaming the 'Clear' method
-     * to 'clear' which would match std::vector and std::map.
+     * We follow STL's convention of using lower-case
+     * methods so that this handles all STL container
+     * classes as well.
      *
      * @param t Unused, only helping compiler choose the correct method
      */
     template <typename T>
     void clear(the_type<T> t) { baggage_->Clear(); }
-
-    /**
-     * Clear a vector by calling the std::vector::clear method.
-     * @param t Unused, only helping compiler choose the correct method
-     */
-    template <typename Content>
-    void clear(the_type<std::vector<Content>> t) { baggage_->clear(); }
-
-    /**
-     * Clear a map by calling the std::map::clear method.
-     * @param t Unused, only helping compiler choose the correct method
-     */
-    template <typename Key, typename Val>
-    void clear(the_type<std::map<Key, Val>> t) { baggage_->clear(); }
-
-   private:  // specializations of post_update
-    /**
-     * In general, don't do anything after an object has been updated.
-     * @param t Unused, only helping compiler choose the correct method
-     */
-    template <typename T>
-    void post_update(the_type<T> t) {}
-
-    /**
-     * For std::vector, use the sort method after the contents are updated.
-     *
-     * @note This is where we require that any contents
-     * of vectors have the operator< defined.
-     *
-     * @param t Unused, only helping compiler choose the correct method
-    template <typename Content>
-    void post_update(the_type<std::vector<Content>> t) {
-      std::sort(baggage_->begin(), baggage_->end());
-    }
-     */
 
    private: //specializations of stream
     /**
@@ -696,7 +653,7 @@ class Bus {
      */
     template <typename T>
     void stream(the_type<T> t, std::ostream& s) const {
-      //s << *baggagage_;
+      s << *baggagage_;
     }
 
     /**
@@ -710,12 +667,9 @@ class Bus {
      */
     template <typename Content>
     void stream(the_type<std::vector<Content>> t, std::ostream& s) const {
-      s << baggage_->size();
-      /*
       s << "[ ";
       for (auto const& entry : *baggage_) s << entry << " ";
       s << "]";
-      */
     }
 
     /**
@@ -730,21 +684,17 @@ class Bus {
      */
     template <typename Key, typename Val>
     void stream(the_type<std::map<Key,Val>> t, std::ostream& s) const {
-      s << baggage_->size();
-      /*
       s << "{ ";
       for (auto const& [k, v] : *baggage_) {
         s << k << " -> " << v << " ";
       }
       s << "}";
-      */
     }
 
    private:
     /// A pointer to the baggage we own and created
     BaggageType* baggage_;
   };  // Passenger
-
 
  private:
   /**

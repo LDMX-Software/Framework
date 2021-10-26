@@ -15,3 +15,15 @@ The behavior of this Framework is dynamically configured at run-time by running 
 This configuration style is extermely flexible and allows both C++ and Python to do what they do best.
 
 Besides this core functionality of processors looking at data event-by-event, there are additional helpers that allow processors to log through boost logging and store data in a less-hierarchical format (Ntuples).
+
+## Structure
+
+`fire` is only a _Framework_ for processing highly-chunked data a single chunk (event) at a time.
+In order to actually _do_ something, the user must define processors to perform various tasks on an event.
+These processors are grouped together into a "module" which may define other important plugins as well.
+
+- Module
+  - Processors - classes the read/write event data
+  - Event objects - structures for event data
+  - Condition Objects and their Providers
+
