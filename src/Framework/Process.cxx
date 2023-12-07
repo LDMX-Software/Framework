@@ -105,9 +105,21 @@ Process::Process(const framework::config::Parameters &configuration)
     conditions_.createConditionsObjectProvider(className, objectName, tagName,
                                                cop);
   }
+
+  bool logPerformance = configuration.getParameter<bool>("logPerformance", false);
+  if (logPerformance) {
+    std::vector<std::string> names{sequence_.size()};
+    for (std::size_t i{0}; i < sequence_.size(); i++) {
+      names[i] = sequence_[i]->getName();
+    }
+    performance_ = new performance::Tracker(makeHistoDirectory("performance"), names);
+  }
 }
 
 Process::~Process() {
+  // need to delete the performance object so that it is
+  // written before we close the histogram file below
+  if (performance_) delete performance_;
   for (EventProcessor *ep : sequence_) {
     delete ep;
   }
@@ -119,6 +131,7 @@ Process::~Process() {
 }
 
 void Process::run() {
+  if (performance_) performance_->absolute_start();
   // set up the logging for this run
   logging::open(logging::convertLevel(termLevelInt_),
                 logging::convertLevel(fileLevelInt_),
@@ -141,8 +154,16 @@ void Process::run() {
   theEvent.getEventHeader().setRun(runForGeneration_);
 
   // Start by notifying everyone that modules processing is beginning
+  std::size_t i_proc{0};
+  if (performance_) performance_->start(performance::Callback::onProcessStart, 0);
   conditions_.onProcessStart();
-  for (auto module : sequence_) module->onProcessStart();
+  for (auto module : sequence_) {
+    i_proc++;
+    if (performance_) performance_->start(performance::Callback::onProcessStart, i_proc);
+    module->onProcessStart();
+    if (performance_) performance_->stop(performance::Callback::onProcessStart, i_proc);
+  }
+  if (performance_) performance_->stop(performance::Callback::onProcessStart, 0);
 
   // If we have no input files, but do have an event number, run for
   // that number of events and generate an output file.
@@ -160,9 +181,7 @@ void Process::run() {
     // Configure the event file to create an output file with no parent. This
     // requires setting the parameters isOutputFile and isSingleOutput to true.
     EventFile outFile(config_, outputFileName, nullptr, true, true, false); 
-
-    for (auto module : sequence_) module->onFileOpen(outFile);
-
+    onFileOpen(outFile);
     outFile.setupEvent(&theEvent);
 
     for (auto rule : dropKeepRules_) outFile.addDrop(rule);
@@ -205,7 +224,7 @@ void Process::run() {
       NtupleManager::getInstance().clear();
     }
 
-    for (auto module : sequence_) module->onFileClose(outFile);
+    onFileClose(outFile);
 
     runHeader.setRunEnd(std::time(nullptr));
     runHeader.setNumTries(totalTries);
@@ -234,8 +253,7 @@ void Process::run() {
       EventFile inFile(config_, infilename);
 
       ldmx_log(info) << "Opening file " << infilename;
-
-      for (auto module : sequence_) module->onFileOpen(inFile);
+      onFileOpen(inFile);
 
       // configure event file that will be iterated over
       EventFile *masterFile;
@@ -314,8 +332,7 @@ void Process::run() {
       }
 
       ldmx_log(info) << "Closing file " << infilename;
-
-      for (auto module : sequence_) module->onFileClose(inFile);
+      onFileClose(inFile);
 
       // Reset the event in case of multiple input files
       theEvent.onEndOfFile();
@@ -341,20 +358,20 @@ void Process::run() {
 
   }  // are there input files? if-else tree
 
-  // close up histogram file if anything was put into it
-  if (histoTFile_) {
-    histoTFile_->Write();
-    delete histoTFile_;
-    histoTFile_ = 0;
-  }
-
   // finally, notify everyone that we are stopping
+  if(performance_) performance_->start(performance::Callback::onProcessEnd, 0);
+  i_proc = 0;
   for (auto module : sequence_) {
+    i_proc++;
+    if(performance_) performance_->start(performance::Callback::onProcessEnd, i_proc);
     module->onProcessEnd();
+    if(performance_) performance_->stop(performance::Callback::onProcessEnd, i_proc);
   }
+  if(performance_) performance_->stop(performance::Callback::onProcessEnd, 0);
 
   // we're done so let's close up the logging
   logging::close();
+  if (performance_) performance_->absolute_stop();
 }
 
 int Process::getRunNumber() const {
@@ -375,7 +392,7 @@ TDirectory *Process::openHistoFile() {
     // trying to write histograms/ntuples but no file defined
     EXCEPTION_RAISE("NoHistFileName",
                     "You did not provide the necessary histogram file name to "
-                    "put your histograms (or ntuples) in.\n    Provide this "
+                    "put your histograms (or performance data) in.\n    Provide this "
                     "name in the python configuration with 'p.histogramFile = "
                     "\"myHistFile.root\"' where p is the Process object.");
   } else if (histoTFile_ == nullptr) {
@@ -391,14 +408,29 @@ TDirectory *Process::openHistoFile() {
 void Process::newRun(ldmx::RunHeader& header) {
   // Producers are allowed to put parameters into
   // the run header through 'beforeNewRun' method
-  for (auto module : sequence_)
-    if (dynamic_cast<Producer *>(module))
+  if(performance_) performance_->start(performance::Callback::beforeNewRun, 0);
+  std::size_t i_proc{0};
+  for (auto module : sequence_) {
+    i_proc++;
+    if (dynamic_cast<Producer *>(module)) {
+      if(performance_) performance_->start(performance::Callback::beforeNewRun, i_proc);
       dynamic_cast<Producer *>(module)->beforeNewRun(header);
+      if(performance_) performance_->stop(performance::Callback::beforeNewRun, i_proc);
+    }
+  }
+  if(performance_) performance_->stop(performance::Callback::beforeNewRun, 0);
   // now run header has been modified by Producers,
   // it is valid to read from for everyone else in 'onNewRun'
+  if (performance_) performance_->start(performance::Callback::onNewRun, 0);
   conditions_.onNewRun(header);
-  for (auto module : sequence_)
+  i_proc = 0;
+  for (auto module : sequence_) {
+    i_proc++;
+    if (performance_) performance_->start(performance::Callback::onNewRun, i_proc);
     module->onNewRun(header);
+    if (performance_) performance_->stop(performance::Callback::onNewRun, i_proc);
+  }
+  if (performance_) performance_->stop(performance::Callback::onNewRun, 0);
 }
 
 bool Process::process(int n, Event& event) const {
@@ -411,18 +443,56 @@ bool Process::process(int n, Event& event) const {
                    << t.AsString("lc") << ")";
   }
 
+  if (performance_) performance_->start(performance::Callback::process, 0);
+  std::size_t i_proc{0};
   try {
     for (auto module : sequence_) {
+      i_proc++;
+      if (performance_) performance_->start(performance::Callback::process, i_proc);
       if (dynamic_cast<Producer *>(module)) {
         (dynamic_cast<Producer *>(module))->produce(event);
       } else if (dynamic_cast<Analyzer *>(module)) {
         (dynamic_cast<Analyzer *>(module))->analyze(event);
       }
+      if (performance_) performance_->stop(performance::Callback::process, i_proc);
     }
   } catch (AbortEventException &) {
+    if (performance_) {
+      performance_->stop(performance::Callback::process, i_proc);
+      performance_->stop(performance::Callback::process, 0);
+      performance_->end_event(false);
+    }
     return false;
   }
+  if (performance_) {
+    performance_->stop(performance::Callback::process, 0);
+    performance_->end_event(true);
+  }
   return true;
+}
+
+void Process::onFileOpen(EventFile& file) const {
+  if (performance_) performance_->start(performance::Callback::onFileOpen, 0);
+  std::size_t i_proc{0};
+  for (auto module : sequence_) {
+    i_proc++;
+    if (performance_) performance_->start(performance::Callback::onFileOpen, i_proc);
+    module->onFileOpen(file);
+    if (performance_) performance_->stop(performance::Callback::onFileOpen, i_proc);
+  }
+  if (performance_) performance_->stop(performance::Callback::onFileOpen, 0);
+}
+
+void Process::onFileClose(EventFile& file) const {
+  if (performance_) performance_->start(performance::Callback::onFileClose, 0);
+  std::size_t i_proc{0};
+  for (auto module : sequence_) {
+    i_proc++;
+    if (performance_) performance_->start(performance::Callback::onFileClose, i_proc);
+    module->onFileClose(file);
+    if (performance_) performance_->stop(performance::Callback::onFileClose, i_proc);
+  }
+  if (performance_) performance_->stop(performance::Callback::onFileClose, 0);
 }
 
 }  // namespace framework

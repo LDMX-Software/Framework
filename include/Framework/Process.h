@@ -13,6 +13,7 @@
 #include "Framework/Exception/Exception.h"
 #include "Framework/RunHeader.h"
 #include "Framework/StorageControl.h"
+#include "Framework/Performance/Tracker.h"
 
 // STL
 #include <map>
@@ -152,6 +153,16 @@ class Process {
    */
   void newRun(ldmx::RunHeader& header);
 
+  /**
+   * File is being opened
+   */
+  void onFileOpen(EventFile& file) const;
+
+  /**
+   * File is begin closed
+   */
+  void onFileClose(EventFile& file) const;
+
  private:
   /// The parameters used to configure this class.
   framework::config::Parameters config_; 
@@ -219,6 +230,9 @@ class Process {
 
   /** TFile for histograms and other user products */
   TFile *histoTFile_{0};
+
+  /** class with calls backs to track performance measurements of software */
+  performance::Tracker* performance_{0};
 
   /// Turn on logging for our process
   enableLogging("Process");
